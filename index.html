@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HTML Yöneticisi</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3352;
+      --accent: #5b6ef5;
+      --accent2: #8b5cf6;
+      --text: #e8eaf6;
+      --text-muted: #7b82a8;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --gold: #f59e0b;
+      --radius: 12px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Ana Görüntü Alanı ── */
+    #display-area {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    #display-frame,
+    .display-frame-slot {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    #empty-state {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: var(--text-muted);
+    }
+
+    #empty-state svg { opacity: 0.3; }
+    #empty-state p { font-size: 1.1rem; }
+
+    /* ── Gizli Ayar Düğmesi ── */
+    #settings-trigger {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+    }
+
+    #settings-trigger:hover { opacity: 1 !important; }
+    #settings-trigger:focus { outline: none; opacity: 0.6; }
+
+    #settings-trigger svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      transition: transform 0.4s ease, color 0.2s;
+    }
+
+    #settings-trigger:hover svg {
+      transform: rotate(90deg);
+      color: var(--accent);
+    }
+
+    #device-badge-container {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      z-index: 9998;
+      opacity: 0.05;
+      transition: opacity 0.25s ease;
+      flex-wrap: wrap;
+      align-content: flex-start;
+    }
+
+    #device-badge-container:hover { opacity: 1; }
+
+    #device-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    #device-badge:hover {
+      background: var(--surface2);
+    }
+
+    #device-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    #device-name-display {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    #device-name-display:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    /* ── Favoriler Gösterimi — display tabs içine entegre ── */
+    #favorites-display {
+      display: none;
+    }
+
+    #favorites-display:hover { opacity: 1; }
+
+    .favorite-id-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .favorite-id-badge:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .favorite-id-badge.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ── Ayar Paneli Overlay ── */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: none;
+      align-items: flex-end;
+      justify-content: flex-end;
+    }
+
+    #overlay.open { display: flex; }
+
+    /* ── Panel ── */
+    #panel {
+      width: 480px;
+      height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.25s ease;
+      overflow: hidden;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to   { transform: translateX(0); }
+    }
+
+    /* ── Panel Header ── */
+    .panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title span { color: var(--accent); font-size: 1.1rem; }
+
+    #close-panel {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+    #close-panel:hover { color: var(--text); background: var(--surface2); }
+
+    /* ── Panel Tabs ── */
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: color 0.2s, border-bottom 0.2s;
+      border-bottom: 2px solid transparent;
+      letter-spacing: 0.03em;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Panel Body ── */
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-track { background: transparent; }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Tab İçerikleri ── */
+    .tab-content { display: none; flex-direction: column; gap: 16px; }
+    .tab-content.active { display: flex; }
+
+    /* ── Slot Kartı ── */
+    .slot-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .slot-card:hover { border-color: var(--accent); }
+    .slot-card.is-favorite { border-color: var(--gold); }
+
+    .slot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slot-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slot-badge {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: var(--accent);
+      color: #fff;
+      opacity: 0.8;
+    }
+
+    .slot-badge.fav-badge { background: var(--gold); }
+
+    .slot-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* ── Cihaz Kartı ── */
+    .device-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .device-card.online { border-color: var(--success); }
+    .device-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .device-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .device-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .device-status-dot.online { background: var(--success); }
+    .device-number {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: var(--bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .device-meta { font-size: 0.68rem; color: var(--text-muted); }
+    .device-assign-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .device-assign-select {
+      flex: 1;
+      min-width: 120px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.75rem;
+    }
+    .device-slot-checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      width: 100%;
+    }
+    .device-slot-check {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 10px 4px 8px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .device-slot-check:hover { border-color: var(--accent); }
+    .device-slot-check.checked {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(91,110,245,0.12);
+    }
+    .device-slot-check input { accent-color: var(--accent); cursor: pointer; }
+
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .icon-btn:hover { color: var(--text); border-color: var(--accent); }
+    .icon-btn.fav-active { color: var(--gold); border-color: var(--gold); }
+    .icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+    .icon-btn.show-active { color: var(--success); border-color: var(--success); }
+
+    textarea.slot-input {
+      width: 100%;
+      min-height: 100px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      padding: 10px;
+      resize: vertical;
+      transition: border-color 0.2s;
+      line-height: 1.5;
+    }
+
+    textarea.slot-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea.slot-input::placeholder { color: var(--text-muted); }
+
+    .slot-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slot-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Ekle Butonu ── */
+    #add-slot-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      background: none;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    #add-slot-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(91,110,245,0.05);
+    }
+
+    /* ── Kaydet Butonu ── */
+    .save-btn {
+      padding: 9px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .save-btn:hover { opacity: 0.9; }
+    .save-btn:active { transform: scale(0.97); }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 60px;
+      right: 20px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      z-index: 99999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+    }
+
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { background: var(--success); color: #fff; }
+    #toast.error   { background: var(--danger);  color: #fff; }
+    #toast.info    { background: var(--accent);  color: #fff; }
+
+    /* ── Yükleme ── */
+    .loading-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .loading-dots span {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: bounce 0.8s infinite;
+    }
+
+    .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Favoriler Tab ── */
+    .fav-empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 40px 0;
+    }
+
+    /* ── İsim Düzenleme ── */
+    .slot-name-input {
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 600;
+      width: 120px;
+      cursor: text;
+      border-bottom: 1px dashed transparent;
+      transition: border-color 0.2s;
+      padding: 1px 2px;
+    }
+
+    .slot-name-input:focus {
+      outline: none;
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Scrollbar ── */
+    #panel::-webkit-scrollbar { width: 0; }
+
+    /* ── Status dot ── */
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      display: inline-block;
+    }
+
+    .status-dot.saved { background: var(--success); }
+    .status-dot.unsaved { background: var(--gold); }
+
+    /* ── Ek Dosyalar (harici .html çağrıları) ── */
+    .files-section {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .files-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .files-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .file-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 6px 3px 10px;
+      font-size: 0.7rem;
+      color: var(--text);
+    }
+
+    .file-del-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.7rem;
+      line-height: 1;
+      padding: 2px 4px;
+    }
+    .file-del-btn:hover { color: var(--danger); }
+
+    .file-add-form {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .file-name-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.75rem;
+      padding: 6px 8px;
+      font-family: 'Courier New', monospace;
+    }
+    .file-name-input:focus { outline: none; border-color: var(--accent); }
+
+    .file-content-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.72rem;
+      padding: 8px;
+      min-height: 80px;
+      font-family: 'Courier New', monospace;
+      resize: vertical;
+    }
+    .file-content-input:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      #panel { width: 100vw; }
+    }
+    /* ── Kilit / Auth Modal ── */
+    #auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 10001;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #auth-overlay.open { display: flex; }
+
+    #auth-modal {
+      width: 320px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: authPop 0.2s ease;
+    }
+
+    @keyframes authPop {
+      from { opacity: 0; transform: scale(0.94); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    #auth-modal.shake { animation: authShake 0.35s; }
+    @keyframes authShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    .auth-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--surface2);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 2px;
+    }
+
+    .auth-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .auth-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: -8px;
+    }
+
+    .auth-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 10px 12px;
+      transition: border-color 0.2s;
+    }
+
+    .auth-input:focus { outline: none; border-color: var(--accent); }
+
+    .auth-error {
+      font-size: 0.72rem;
+      color: var(--danger);
+      text-align: center;
+      min-height: 14px;
+    }
+
+    .auth-submit {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    .auth-submit:hover { opacity: 0.9; }
+
+    .auth-cancel {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .auth-cancel:hover { color: var(--text); }
+
+    #settings-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #change-pw-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    #change-pw-btn:hover { color: var(--accent); background: var(--surface2); }
+
+    /* ── Ekranda Sekme Geçişleri (birden fazla favori/atama olduğunda) ── */
+    #display-tabs {
+      position: fixed;
+      top: 50px;
+      left: 10px;
+      z-index: 500;
+      display: none;
+      flex-wrap: wrap;
+      max-width: 400px;
+      gap: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, pointer-events 0.3s ease;
+      padding: 4px;
+      padding-top: 15px;
+      margin-top: -15px;
+    }
+    
+    #display-tabs.show { display: flex; }
+    
+    /* ── Görünsün ve tıklanabilir olsun ── */
+    #display-tabs.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    /* ── Favori tabları — display-tabs içinde ── */
+    .display-tab-btn.favorite-tab {
+      background: linear-gradient(135deg, var(--accent2), var(--accent)) !important;
+      border-color: var(--accent) !important;
+      color: #fff !important;
+      font-weight: 600 !important;
+    }
+    
+    .display-tab-btn.favorite-tab::before {
+      content: "⭐ ";
+      margin-right: 2px;
+    }
+    .display-tab-btn {
+      padding: 4px 8px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.68rem;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s, opacity 0.15s;
+      backdrop-filter: none;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      min-width: auto;
+    }
+    .display-tab-btn:hover { background: var(--surface2); color: var(--text); opacity: 1; }
+    .display-tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Ana Görüntü Alanı -->
+<div id="display-area">
+  <div id="empty-state"></div>
+  <iframe id="display-frame" style="display:none"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+  ></iframe>
+</div>
+
+<!-- Gizli Ayar Tetikleyicisi -->
+<button id="settings-trigger" title="Ayarlar" aria-label="Ayarları aç">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<!-- Gizli Cihaz Rozeti (sol üst — favoriler butonları sağında) -->
+<div id="device-badge-container" aria-hidden="true">
+  <div id="device-badge">
+    <span id="device-badge-dot"></span>
+  </div>
+  <div id="device-name-display"></div>
+  <div id="favorites-display"></div>
+  <div id="display-tabs"></div>
+</div>
+
+<!-- Panel Overlay -->
+<div id="overlay">
+  <div id="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <span>⚙</span> HTML Yöneticisi
+      </div>
+      <div id="settings-header-actions">
+        <button id="change-pw-btn" title="Şifre Değiştir">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </button>
+        <button id="close-panel" title="Kapat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-tabs">
+      <button class="tab-btn active" data-tab="slots">📄 Slotlar</button>
+      <button class="tab-btn" data-tab="favorites">⭐ Favoriler</button>
+      <button class="tab-btn" data-tab="devices">💻 Cihazlar</button>
+    </div>
+
+    <!-- Slotlar Tab -->
+    <div class="panel-body tab-content active" id="tab-slots">
+      <div id="slots-container">
+        <div style="display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:0.8rem;padding:20px 0;justify-content:center;">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+          Yükleniyor...
+        </div>
+      </div>
+      <button id="add-slot-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Yeni Slot Ekle
+      </button>
+    </div>
+
+    <!-- Favoriler Tab -->
+    <div class="panel-body tab-content" id="tab-favorites">
+      <div style="font-size:0.72rem;color:var(--text-muted);line-height:1.5;">
+        Birden fazla favori seçebilirsiniz. 1'den fazla favori olduğunda ekranın sol üst
+        köşesinde aralarında geçiş yapabileceğiniz sekme düğmeleri belirir.
+      </div>
+      <div id="favorites-container">
+        <div class="fav-empty">⭐ Henüz favori yok</div>
+      </div>
+    </div>
+
+    <!-- Cihazlar Tab -->
+    <div class="panel-body tab-content" id="tab-devices">
+      <div style="font-size:0.72rem;color:var(--text-muted);line-height:1.5;">
+        Bağlanan her tarayıcı/cihaz burada listelenir. Bir cihaza bir veya daha fazla slot atarsan
+        sadece o cihazda (1'den fazlaysa sekmeler halinde) gösterilir; atama yapılmazsa cihaz kendi
+        favorilerini izlemeye devam eder.
+      </div>
+      <div id="devices-container">
+        <div class="fav-empty">💻 Henüz bağlı cihaz yok</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Kilit / Auth Modal -->
+<div id="auth-overlay">
+  <div id="auth-modal">
+    <div class="auth-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <div class="auth-title" id="auth-title">Ayarlara Giriş</div>
+    <div class="auth-sub" id="auth-sub" style="display:none;"></div>
+
+    <input type="password" id="auth-input-1" class="auth-input" placeholder="Şifre" autocomplete="off" />
+    <input type="password" id="auth-input-2" class="auth-input" placeholder="Şifre (tekrar)" autocomplete="off" style="display:none;" />
+    <input type="password" id="auth-input-current" class="auth-input" placeholder="Mevcut şifre" autocomplete="off" style="display:none;" />
+
+    <div class="auth-error" id="auth-error"></div>
+
+    <button class="auth-submit" id="auth-submit-btn">Giriş Yap</button>
+    <button class="auth-cancel" id="auth-cancel-btn">Vazgeç</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Firebase + App Script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, doc, setDoc, deleteDoc,
+    serverTimestamp, getDoc, getDocs
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── Firebase Config ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyCHfNAzkmv-Kv8HBcnjVsFbS-XORE0XVXU",
+    authDomain: "hasekipansuman.firebaseapp.com",
+    projectId: "hasekipansuman",
+    storageBucket: "hasekipansuman.firebasestorage.app",
+    messagingSenderId: "13838204763",
+    appId: "1:13838204763:web:494b4d9fde4827f358647e",
+    measurementId: "G-N6MX9MD9RR"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const COLL = "html_slots";
+
+  // ── IndexedDB ──
+  const IDB_NAME = "html-manager";
+  const IDB_STORE = "favorites";
+  const IDB_DEVICE_STORE = "device"; // cihaz numarası/adı burada saklanır
+
+  function openIDB() {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(IDB_NAME, 2);
+      req.onupgradeneeded = e => {
+        const dbInstance = e.target.result;
+        if (!dbInstance.objectStoreNames.contains(IDB_STORE)) {
+          dbInstance.createObjectStore(IDB_STORE, { keyPath: "id" });
+        }
+        if (!dbInstance.objectStoreNames.contains(IDB_DEVICE_STORE)) {
+          dbInstance.createObjectStore(IDB_DEVICE_STORE, { keyPath: "id" });
+        }
+      };
+      req.onsuccess = e => res(e.target.result);
+      req.onerror   = e => rej(e);
+    });
+  }
+
+  async function idbGet(id, storeName = IDB_STORE) {
+    const db = await openIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(storeName, "readonly");
+      const req = tx.objectStore(storeName).get(id);
+      req.onsuccess = () => res(req.result || null);
+      req.onerror   = rej;
+    });
+  }
+
+  async function idbSet(record, storeName = IDB_STORE) {
+    const db = await openIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(storeName, "readwrite");
+      tx.objectStore(storeName).put(record);
+      tx.oncomplete = res;
+      tx.onerror    = rej;
+    });
+  }
+
+  async function idbDelete(id, storeName = IDB_STORE) {
+    const db = await openIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(storeName, "readwrite");
+      tx.objectStore(storeName).delete(id);
+      tx.oncomplete = res;
+      tx.onerror    = rej;
+    });
+  }
+
+  async function idbGetAll(storeName = IDB_STORE) {
+    const db = await openIDB();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(storeName, "readonly");
+      const req = tx.objectStore(storeName).getAll();
+      req.onsuccess = () => res(req.result || []);
+      req.onerror   = rej;
+    });
+  }
+
+  // ── State ──
+  let slots = {};          // { id: { id, name, html, updatedAt } }
+  let favoriteIds = [];    // aktif favori slot id'leri (IndexedDB'den, birden fazla olabilir)
+  let shownSlotId = null;  // ekranda gösterilen slot id
+  let devices = {};        // { id: { id, name, lastSeen, assignedSlotIds } }
+  let assignedSlotIds = []; // bu cihaza yönetici tarafından atanmış slotlar (varsa favorilerden önceliklidir)
+  let currentDisplayIds = []; // ekranda o an aktif olan sekme listesi (favoriler ya da atananlar)
+
+  // ── Cihaz Kimliği ──
+  // Not: Tarayıcılar, gizlilik nedeniyle işletim sisteminin/bilgisayarın gerçek adını
+  // JavaScript'e vermez — böyle bir web API'si yok. Bunun yerine her tarayıcı için
+  // kalıcı bir "cihaz numarası" + değiştirilebilir bir "cihaz adı" kullanıyoruz.
+  // İkisi de IndexedDB'de (device store) saklanır, tarayıcı verileri temizlenmediği
+  // sürece kalıcıdır.
+  const DEVICE_COLL = "devices";
+  const DEVICE_RECORD_ID = "self";
+
+  function guessDeviceName() {
+    const ua = navigator.userAgent;
+    let os = "Bilinmeyen Cihaz";
+    if (/Windows/.test(ua)) os = "Windows";
+    else if (/Mac OS X/.test(ua)) os = "Mac";
+    else if (/Android/.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
+    else if (/Linux/.test(ua)) os = "Linux";
+    let browser = "Tarayıcı";
+    if (/Edg\//.test(ua)) browser = "Edge";
+    else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = "Chrome";
+    else if (/Firefox\//.test(ua)) browser = "Firefox";
+    else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = "Safari";
+    return `${os} - ${browser}`;
+  }
+
+  function randomDeviceNumber() {
+    return Math.floor(1000 + Math.random() * 9000); // 1000–9999 arası
+  }
+
+  // Cihaz kaydını IndexedDB'den okur; yoksa oluşturur (varsa eski localStorage
+  // kaydından göç eder) ve { id, deviceId, number, name } döndürür.
+  async function loadOrCreateDeviceRecord() {
+    const existing = await idbGet(DEVICE_RECORD_ID, IDB_DEVICE_STORE);
+    if (existing) return existing;
+
+    // Önceki sürümden (localStorage) göç — varsa kimliği koru
+    const legacyId   = localStorage.getItem("hm_device_id");
+    const legacyName = localStorage.getItem("hm_device_name");
+
+    const record = {
+      id: DEVICE_RECORD_ID,
+      deviceId: legacyId || ("dev_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9)),
+      number: randomDeviceNumber(),
+      name: legacyName || guessDeviceName()
+    };
+    await idbSet(record, IDB_DEVICE_STORE);
+    return record;
+  }
+
+  async function saveDeviceRecord(partial) {
+    const record = { id: DEVICE_RECORD_ID, deviceId, number: deviceNumber, name: deviceName, ...partial };
+    await idbSet(record, IDB_DEVICE_STORE);
+  }
+
+  const deviceRecord = await loadOrCreateDeviceRecord();
+  const deviceId        = deviceRecord.deviceId;
+  let deviceNumber = deviceRecord.number;
+  let deviceName   = deviceRecord.name;
+
+  // ── UI Refs ──
+  const trigger       = document.getElementById("settings-trigger");
+  const overlay       = document.getElementById("overlay");
+  const closeBtn      = document.getElementById("close-panel");
+  const slotsTab      = document.getElementById("tab-slots");
+  const favsTab       = document.getElementById("tab-favorites");
+  const slotsContainer= document.getElementById("slots-container");
+  const favsContainer = document.getElementById("favorites-container");
+  const addSlotBtn    = document.getElementById("add-slot-btn");
+  const emptyState    = document.getElementById("empty-state");
+  const displayArea   = document.getElementById("display-area");
+  const displayFrame  = document.getElementById("display-frame");
+  const displayTabs   = document.getElementById("display-tabs");
+  const toastEl       = document.getElementById("toast");
+
+  // ── Toast ──
+  let toastTimer;
+  function toast(msg, type = "success") {
+    toastEl.textContent = msg;
+    toastEl.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.className = "", 2800);
+  }
+
+  // ── Cihaz Rozeti (sol üst) ──
+  const deviceBadge = document.getElementById("device-badge");
+  const deviceNameDisplay = document.getElementById("device-name-display");
+  const favoritesDisplay = document.getElementById("favorites-display");
+  
+  function refreshFavoritesDisplay() {
+    if (!favoritesDisplay) return;
+    if (favoriteIds.length === 0) {
+      favoritesDisplay.innerHTML = "";
+      return;
+    }
+    favoritesDisplay.innerHTML = favoriteIds
+      .filter(id => slots[id])
+      .map(id => {
+        const name = slots[id]?.name || 'İsimsiz';
+        const isActive = id === shownSlotId;
+        return `<button type="button" class="favorite-id-badge${isActive ? ' active' : ''}" data-slot-id="${id}" title="⭐ ${name}">⭐ ${escHtml(name)}</button>`;
+      })
+      .join("");
+    
+    // Event listener'ları ekle
+    favoritesDisplay.querySelectorAll(".favorite-id-badge").forEach(btn => {
+      btn.addEventListener("click", () => {
+        showSlot(btn.dataset.slotId);
+        refreshFavoritesDisplay();
+        renderDisplayTabs(); // ── Display tab barını da güncelle ──
+      });
+    });
+    
+    // ── Display tab barını da güncelle (aynı sebeplerden) ──
+    renderDisplayTabs();
+  }
+
+  function refreshBadgeTitle() {
+    deviceBadge.title = `#${deviceNumber} — ${deviceName}\n(düzenlemek için tıkla)`;
+    if (deviceNameDisplay) {
+      deviceNameDisplay.textContent = `#${deviceNumber} ${deviceName}`;
+    }
+  }
+  refreshBadgeTitle();
+  
+  deviceBadge.addEventListener("click", async () => {
+    const newName = prompt("Bu cihaz için görünen ad:", deviceName);
+    if (newName === null) return;
+    const newNumberRaw = prompt("Bu cihaz için numara:", String(deviceNumber));
+    if (newNumberRaw === null) return;
+
+    if (newName.trim()) deviceName = newName.trim();
+    const parsedNumber = parseInt(newNumberRaw, 10);
+    if (!isNaN(parsedNumber)) deviceNumber = parsedNumber;
+
+    await saveDeviceRecord({ number: deviceNumber, name: deviceName });
+    refreshBadgeTitle();
+    sendHeartbeat();
+    toast("Cihaz bilgileri güncellendi", "success");
+  });
+
+  // ── Display tabs'ı device-badge veya display-tabs üzerine gelince göster ──
+  let hideTimeout;
+  
+  deviceBadge.addEventListener("mouseenter", () => {
+    if (displayTabs) {
+      clearTimeout(hideTimeout);
+      displayTabs.classList.add("visible");
+    }
+  });
+
+  deviceBadge.addEventListener("mouseleave", () => {
+    if (displayTabs) {
+      hideTimeout = setTimeout(() => {
+        if (!displayTabs.matches(":hover")) {
+          displayTabs.classList.remove("visible");
+        }
+      }, 50);
+    }
+  });
+
+  // Display tabs'ın kendisine hover listener
+  if (displayTabs) {
+    displayTabs.addEventListener("mouseenter", () => {
+      clearTimeout(hideTimeout);
+      displayTabs.classList.add("visible");
+    });
+    
+    displayTabs.addEventListener("mouseleave", () => {
+      displayTabs.classList.remove("visible");
+    });
+  }
+
+  if (deviceNameDisplay) {
+    deviceNameDisplay.addEventListener("click", async () => {
+      const newName = prompt("Bu cihaz için görünen ad:", deviceName);
+      if (newName === null) return;
+      const newNumberRaw = prompt("Bu cihaz için numara:", String(deviceNumber));
+      if (newNumberRaw === null) return;
+
+      if (newName.trim()) deviceName = newName.trim();
+      const parsedNumber = parseInt(newNumberRaw, 10);
+      if (!isNaN(parsedNumber)) deviceNumber = parsedNumber;
+
+      await saveDeviceRecord({ number: deviceNumber, name: deviceName });
+      refreshBadgeTitle();
+      sendHeartbeat();
+      toast("Cihaz bilgileri güncellendi", "success");
+    });
+  }
+
+  // ── Panel Aç/Kapat ──
+  function openPanel() {
+    overlay.classList.add("open");
+    renderFavoritesTab();
+  }
+
+  closeBtn.addEventListener("click", () => overlay.classList.remove("open"));
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("open"); });
+
+  // ── Gizli 5'li Tıklama Tetikleyicisi ──
+  let clickCount = 0;
+  let clickResetTimer = null;
+  trigger.addEventListener("click", () => {
+    clickCount++;
+    clearTimeout(clickResetTimer);
+    clickResetTimer = setTimeout(() => { clickCount = 0; }, 1500);
+    if (clickCount >= 5) {
+      clickCount = 0;
+      clearTimeout(clickResetTimer);
+      startAuthFlow();
+    }
+  });
+
+  // ── Auth (Şifre) Sistemi ──
+  const SECURITY_DOC = doc(db, "app_config", "security");
+
+  const authOverlay   = document.getElementById("auth-overlay");
+  const authModal     = document.getElementById("auth-modal");
+  const authTitle     = document.getElementById("auth-title");
+  const authSub       = document.getElementById("auth-sub");
+  const authInput1    = document.getElementById("auth-input-1");
+  const authInput2    = document.getElementById("auth-input-2");
+  const authInputCur  = document.getElementById("auth-input-current");
+  const authError     = document.getElementById("auth-error");
+  const authSubmitBtn = document.getElementById("auth-submit-btn");
+  const authCancelBtn = document.getElementById("auth-cancel-btn");
+  const changePwBtn   = document.getElementById("change-pw-btn");
+
+  let authMode = "login"; // "login" | "setup" | "change"
+
+  async function sha256(text) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function resetAuthForm() {
+    authInput1.value = "";
+    authInput2.value = "";
+    authInputCur.value = "";
+    authError.textContent = "";
+    authModal.classList.remove("shake");
+  }
+
+  function showAuthError(msg) {
+    authError.textContent = msg;
+    authModal.classList.remove("shake");
+    void authModal.offsetWidth; // reflow ile animasyonu tekrar tetikle
+    authModal.classList.add("shake");
+  }
+
+  function closeAuthModal() {
+    authOverlay.classList.remove("open");
+    resetAuthForm();
+  }
+
+  authCancelBtn.addEventListener("click", closeAuthModal);
+  authOverlay.addEventListener("click", e => { if (e.target === authOverlay) closeAuthModal(); });
+
+  async function startAuthFlow() {
+    resetAuthForm();
+    const snap = await getDoc(SECURITY_DOC);
+    if (!snap.exists() || !snap.data().passwordHash) {
+      authMode = "setup";
+      authTitle.textContent = "İlk Kurulum";
+      authSub.style.display = "block";
+      authSub.textContent = "Ayarlar için bir şifre oluşturun";
+      authInputCur.style.display = "none";
+      authInput1.style.display = "block";
+      authInput2.style.display = "block";
+      authInput1.placeholder = "Yeni şifre";
+      authInput2.placeholder = "Yeni şifre (tekrar)";
+      authSubmitBtn.textContent = "Şifre Oluştur";
+    } else {
+      authMode = "login";
+      authTitle.textContent = "Ayarlara Giriş";
+      authSub.style.display = "none";
+      authInputCur.style.display = "none";
+      authInput1.style.display = "block";
+      authInput2.style.display = "none";
+      authInput1.placeholder = "Şifre";
+      authSubmitBtn.textContent = "Giriş Yap";
+    }
+    authOverlay.classList.add("open");
+    setTimeout(() => authInput1.focus(), 50);
+  }
+
+  function startChangePasswordFlow() {
+    resetAuthForm();
+    authMode = "change";
+    authTitle.textContent = "Şifre Değiştir";
+    authSub.style.display = "block";
+    authSub.textContent = "Mevcut şifrenizi ve yeni şifrenizi girin";
+    authInputCur.style.display = "block";
+    authInputCur.placeholder = "Mevcut şifre";
+    authInput1.style.display = "block";
+    authInput1.placeholder = "Yeni şifre";
+    authInput2.style.display = "block";
+    authInput2.placeholder = "Yeni şifre (tekrar)";
+    authSubmitBtn.textContent = "Şifreyi Güncelle";
+    authOverlay.classList.add("open");
+    setTimeout(() => authInputCur.focus(), 50);
+  }
+
+  changePwBtn.addEventListener("click", startChangePasswordFlow);
+
+  async function handleAuthSubmit() {
+    authError.textContent = "";
+
+    if (authMode === "setup") {
+      const p1 = authInput1.value;
+      const p2 = authInput2.value;
+      if (p1.length < 4) return showAuthError("Şifre en az 4 karakter olmalı");
+      if (p1 !== p2) return showAuthError("Şifreler eşleşmiyor");
+      const hash = await sha256(p1);
+      await setDoc(SECURITY_DOC, { passwordHash: hash, updatedAt: serverTimestamp() });
+      closeAuthModal();
+      toast("Şifre oluşturuldu");
+      openPanel();
+
+    } else if (authMode === "login") {
+      const p1 = authInput1.value;
+      if (!p1) return showAuthError("Şifre girin");
+      const snap = await getDoc(SECURITY_DOC);
+      const storedHash = snap.exists() ? snap.data().passwordHash : null;
+      const hash = await sha256(p1);
+      if (storedHash && hash === storedHash) {
+        closeAuthModal();
+        openPanel();
+      } else {
+        showAuthError("Şifre yanlış");
+        authInput1.value = "";
+        authInput1.focus();
+      }
+
+    } else if (authMode === "change") {
+      const cur = authInputCur.value;
+      const p1 = authInput1.value;
+      const p2 = authInput2.value;
+      if (!cur) return showAuthError("Mevcut şifreyi girin");
+      const snap = await getDoc(SECURITY_DOC);
+      const storedHash = snap.exists() ? snap.data().passwordHash : null;
+      const curHash = await sha256(cur);
+      if (!storedHash || curHash !== storedHash) {
+        showAuthError("Mevcut şifre yanlış");
+        authInputCur.value = "";
+        authInputCur.focus();
+        return;
+      }
+      if (p1.length < 4) return showAuthError("Yeni şifre en az 4 karakter olmalı");
+      if (p1 !== p2) return showAuthError("Yeni şifreler eşleşmiyor");
+      const newHash = await sha256(p1);
+      await setDoc(SECURITY_DOC, { passwordHash: newHash, updatedAt: serverTimestamp() });
+      closeAuthModal();
+      toast("Şifre güncellendi");
+    }
+  }
+
+  authSubmitBtn.addEventListener("click", handleAuthSubmit);
+  [authInput1, authInput2, authInputCur].forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") handleAuthSubmit();
+    });
+  });
+
+  // ── Tab Geçişi ──
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+      btn.classList.add("active");
+      const tabId = "tab-" + btn.dataset.tab;
+      document.getElementById(tabId).classList.add("active");
+      if (btn.dataset.tab === "favorites") renderFavoritesTab();
+      if (btn.dataset.tab === "devices") renderDevicesTab();
+    });
+  });
+
+  // ── Firestore: Tek Seferlik Veri Çekme (heartbeat/realtime yok) ──
+  // Sayfa ilk açıldığında verileri bir kez çeker; sayfa yeniden açılana
+  // (yenilenene) kadar aynı kalır.
+  async function loadSlotsOnce() {
+    const snapshot = await getDocs(collection(db, COLL));
+    slots = {};
+    snapshot.forEach(d => { slots[d.id] = { id: d.id, ...d.data() }; });
+  }
+
+  // ── Cihaz Varlığı (Presence) ──
+  const ownDeviceDocRef = doc(db, DEVICE_COLL, deviceId);
+
+  async function sendHeartbeat() {
+    try {
+      await setDoc(ownDeviceDocRef, {
+        name: deviceName,
+        number: deviceNumber,
+        userAgent: navigator.userAgent,
+        lastSeen: serverTimestamp()
+      }, { merge: true });
+    } catch (e) { /* sessiz geç */ }
+  }
+
+  async function loadAssignedSlotOnce() {
+    const snap = await getDoc(ownDeviceDocRef);
+    const data = snap.data();
+    // Yeni format: assignedSlotIds (dizi). Eski format: assignedSlotId (tekil) — göç edilir.
+    if (Array.isArray(data?.assignedSlotIds)) {
+      assignedSlotIds = data.assignedSlotIds.filter(Boolean);
+    } else if (data?.assignedSlotId) {
+      assignedSlotIds = [data.assignedSlotId];
+    } else {
+      assignedSlotIds = [];
+    }
+  }
+
+  function applyDisplayState() {
+    const remoteIds = assignedSlotIds.filter(id => slots[id]);
+    const localIds  = favoriteIds.filter(id => slots[id]);
+    const activeIds = remoteIds.length > 0 ? remoteIds : localIds;
+
+    if (activeIds.length === 0) {
+      currentDisplayIds = [];
+      hideDisplay();
+      renderDisplayTabs();
+      return;
+    }
+
+    currentDisplayIds = activeIds;
+    const toShow = activeIds.includes(shownSlotId) ? shownSlotId : activeIds[0];
+    showSlot(toShow);
+    renderDisplayTabs();
+  }
+
+  // ── Ekranda Sekme Geçişleri ──
+  function renderDisplayTabs() {
+    if (!displayTabs) return;
+    
+    // ── Favorileri ve diğer display slotlarını birleştir ──
+    const allTabIds = [...new Set([...favoriteIds.filter(id => slots[id]), ...currentDisplayIds])];
+    
+    if (allTabIds.length <= 1) {
+      displayTabs.classList.remove("show");
+      displayTabs.innerHTML = "";
+      return;
+    }
+    
+    displayTabs.innerHTML = allTabIds.map(id => {
+      const s = slots[id];
+      const label = escHtml(s?.name || "İsimsiz");
+      const active = id === shownSlotId ? " active" : "";
+      const isFav = favoriteIds.includes(id) ? " favorite-tab" : "";
+      return `<button type="button" class="display-tab-btn${active}${isFav}" data-id="${id}">${label}</button>`;
+    }).join("");
+    
+    displayTabs.classList.add("show");
+    displayTabs.querySelectorAll(".display-tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        showSlot(btn.dataset.id);
+        renderDisplayTabs();
+      });
+    });
+  }
+
+  // ── Cihazlar (Yönetici Görünümü) ──
+  async function loadDevicesOnce() {
+    const snapshot = await getDocs(collection(db, DEVICE_COLL));
+    devices = {};
+    snapshot.forEach(d => { devices[d.id] = { id: d.id, ...d.data() }; });
+  }
+
+  // ── İlk Yükleme: tüm veriyi bir kez çek ──
+  async function initialLoad() {
+    await sendHeartbeat();
+    await Promise.all([loadSlotsOnce(), loadAssignedSlotOnce(), loadDevicesOnce()]);
+    await loadFavoriteIds();
+    renderSlotsTab();
+    renderDevicesTab();
+    applyDisplayState();
+    refreshFavoritesDisplay();
+  }
+  initialLoad();
+
+  function renderDevicesTab() {
+    const devicesContainer = document.getElementById("devices-container");
+    if (!devicesContainer) return;
+
+    const list = Object.values(devices).sort((a, b) =>
+      (b.lastSeen?.toMillis?.() || 0) - (a.lastSeen?.toMillis?.() || 0)
+    );
+
+    if (list.length === 0) {
+      devicesContainer.innerHTML = `<div class="fav-empty">💻 Henüz bağlı cihaz yok</div>`;
+      return;
+    }
+
+    const now = Date.now();
+    const allSlots = Object.values(slots);
+
+    devicesContainer.innerHTML = list.map(dev => {
+      const lastSeenMs = dev.lastSeen?.toMillis?.() || 0;
+      const online = (now - lastSeenMs) < 60000; // 60sn içinde nabız gelmişse çevrimiçi say
+      const isSelf = dev.id === deviceId;
+      const devAssigned = Array.isArray(dev.assignedSlotIds)
+        ? dev.assignedSlotIds
+        : (dev.assignedSlotId ? [dev.assignedSlotId] : []);
+
+      const checksHtml = allSlots.map(s => {
+        const checked = devAssigned.includes(s.id);
+        return `
+          <label class="device-slot-check${checked ? ' checked' : ''}">
+            <input type="checkbox" data-dev="${dev.id}" value="${s.id}" ${checked ? 'checked' : ''}/>
+            ${escHtml(s.name || 'İsimsiz')}
+          </label>
+        `;
+      }).join("") || `<span style="font-size:0.7rem;color:var(--text-muted);">Henüz slot yok</span>`;
+
+      return `
+        <div class="device-card ${online ? 'online' : ''}" data-id="${dev.id}">
+          <div class="device-top">
+            <div class="device-name-row">
+              <span class="device-status-dot ${online ? 'online' : ''}"></span>
+              <span class="device-number">#${dev.number ?? '—'}</span>
+              ${escHtml(dev.name || 'İsimsiz cihaz')}
+              ${isSelf ? '<span class="slot-badge">Bu cihaz</span>' : ''}
+            </div>
+            <span class="device-meta">
+              ${online ? 'Çevrimiçi' : 'Çevrimdışı'}${lastSeenMs ? ' · ' + formatDate(new Date(lastSeenMs)) : ''}
+            </span>
+          </div>
+          <div style="font-size:0.68rem;color:var(--text-muted);">
+            Atanan slot yoksa cihaz kendi favorilerini gösterir. 1'den fazla seçim yapılırsa sekmeler belirir.
+          </div>
+          <div class="device-assign-row">
+            <div class="device-slot-checks">${checksHtml}</div>
+            <button type="button" class="icon-btn danger device-clear-btn" data-id="${dev.id}">Kaldır (Favoriyi izle)</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    devicesContainer.querySelectorAll('.device-slot-check input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener("change", async () => {
+        const devId = cb.dataset.dev;
+        const card = devicesContainer.querySelector(`.device-card[data-id="${devId}"]`);
+        const checked = Array.from(card.querySelectorAll('.device-slot-check input:checked')).map(i => i.value);
+        await setDoc(doc(db, DEVICE_COLL, devId), {
+          assignedSlotIds: checked,
+          assignedSlotId: null // eski alanı temizle
+        }, { merge: true });
+        if (devices[devId]) { devices[devId].assignedSlotIds = checked; devices[devId].assignedSlotId = null; }
+        cb.closest(".device-slot-check").classList.toggle("checked", cb.checked);
+        toast("Cihaza içerik atandı — hedef cihazın yeniden açılması gerekir", "success");
+      });
+    });
+
+    devicesContainer.querySelectorAll(".device-clear-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await setDoc(doc(db, DEVICE_COLL, btn.dataset.id), { assignedSlotIds: [], assignedSlotId: null }, { merge: true });
+        if (devices[btn.dataset.id]) { devices[btn.dataset.id].assignedSlotIds = []; devices[btn.dataset.id].assignedSlotId = null; }
+        renderDevicesTab();
+        toast("Atama kaldırıldı — hedef cihazın yeniden açılması gerekir", "info");
+      });
+    });
+  }
+
+  // ── Favorileri Yükle (IndexedDB) ──
+  async function loadFavoriteIds() {
+    const all = await idbGetAll();
+    favoriteIds = all.map(r => r.id);
+  }
+
+  // ── Ek Dosyaları Blob URL'e çevirip ana HTML içindeki referansları değiştir ──
+  // Ana HTML (veya bir ek dosya) içinde "detay.html" gibi bir dosya adı geçen
+  // her yerde (src=, href=, fetch(...) vb.) bu dosya adını, o dosyanın içeriğinden
+  // üretilmiş bir blob: URL ile değiştiriyoruz. Böylece harici bir sunucuya/dosyaya
+  // gerek kalmadan, referans edilen sayfa srcdoc içinde kendi kendine çalışır.
+  let activeBlobUrls = [];
+
+  function revokeActiveBlobUrls() {
+    activeBlobUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) {} });
+    activeBlobUrls = [];
+  }
+
+  function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function replaceFileRefs(html, blobUrlMap) {
+    let result = html;
+    Object.entries(blobUrlMap).forEach(([name, url]) => {
+      const re = new RegExp(escapeRegExp(name), "g");
+      result = result.replace(re, url);
+    });
+    return result;
+  }
+
+  function resolveHtmlWithFiles(mainHtml, filesMap) {
+    const names = Object.keys(filesMap || {});
+    if (names.length === 0) return mainHtml;
+
+    let contents = { ...filesMap };
+    let blobUrlMap = {};
+    const newBlobUrls = [];
+
+    // Birkaç geçiş yapıyoruz ki dosyalar birbirini çağırıyorsa
+    // (ör. detay.html içinde galeri.html'e link varsa) o da çözülsün.
+    const PASSES = 3;
+    for (let p = 0; p < PASSES; p++) {
+      blobUrlMap = {};
+      names.forEach(name => {
+        const url = URL.createObjectURL(new Blob([contents[name]], { type: "text/html" }));
+        blobUrlMap[name] = url;
+        newBlobUrls.push(url);
+      });
+      const nextContents = {};
+      names.forEach(name => {
+        nextContents[name] = replaceFileRefs(filesMap[name], blobUrlMap);
+      });
+      contents = nextContents;
+    }
+
+    activeBlobUrls.push(...newBlobUrls);
+    return replaceFileRefs(mainHtml, blobUrlMap);
+  }
+
+  // ── Slot başına iframe saklaması ──
+  const slotFrames = {};
+
+  function showSlot(id) {
+    const slot = slots[id];
+    if (!slot || !slot.html) return;
+    
+    // Önceki iframe'i gizle
+    if (shownSlotId && slotFrames[shownSlotId]) {
+      slotFrames[shownSlotId].style.display = "none";
+    }
+    
+    shownSlotId = id;
+    emptyState.style.display = "none";
+    
+    // Bu slot için iframe var mı?
+    if (!slotFrames[id]) {
+      // Yeni iframe oluştur
+      const newFrame = document.createElement("iframe");
+      newFrame.id = `frame-${id}`;
+      newFrame.className = "display-frame-slot";
+      newFrame.style.cssText = "width:100%;height:100%;border:none;background:#fff;";
+      newFrame.sandbox.add("allow-scripts", "allow-same-origin", "allow-forms", "allow-popups", "allow-modals", "allow-downloads");
+      
+      displayArea.appendChild(newFrame);
+      slotFrames[id] = newFrame;
+      
+      // İçeriği yükle
+      const finalHtml = resolveHtmlWithFiles(slot.html, slot.files);
+      newFrame.srcdoc = finalHtml;
+    }
+    
+    // İframe'i göster
+    slotFrames[id].style.display = "block";
+  }
+
+  function hideDisplay() {
+    // Gösterilen iframe'i gizle
+    if (shownSlotId && slotFrames[shownSlotId]) {
+      slotFrames[shownSlotId].style.display = "none";
+    }
+    
+    shownSlotId = null;
+    emptyState.style.display   = "flex";
+  }
+
+  // ── Yeni Slot Ekle ──
+  addSlotBtn.addEventListener("click", async () => {
+    const id = "slot_" + Date.now();
+    const name = "Slot " + (Object.keys(slots).length + 1);
+    await setDoc(doc(db, COLL, id), { name, html: "", updatedAt: serverTimestamp() });
+    slots[id] = { id, name, html: "", updatedAt: new Date() };
+    renderSlotsTab();
+    toast("Yeni slot eklendi", "info");
+  });
+
+  // ── Slotlar Tab Render ──
+  function renderSlotsTab() {
+    const slotList = Object.values(slots);
+
+    if (slotList.length === 0) {
+      slotsContainer.innerHTML = `
+        <div style="text-align:center;color:var(--text-muted);font-size:0.82rem;padding:30px 0;">
+          Henüz slot yok. Aşağıdan ekleyin.
+        </div>`;
+      return;
+    }
+
+    slotsContainer.innerHTML = "";
+
+    slotList.forEach(slot => {
+      const isFav     = favoriteIds.includes(slot.id);
+      const isShown   = slot.id === shownSlotId;
+      const card = document.createElement("div");
+      card.className = "slot-card" + (isFav ? " is-favorite" : "");
+      card.dataset.id = slot.id;
+
+      card.innerHTML = `
+        <div class="slot-header">
+          <div class="slot-name">
+            <span class="status-dot ${slot.html ? 'saved' : 'unsaved'}"></span>
+            <input class="slot-name-input" value="${escHtml(slot.name || 'İsimsiz')}" placeholder="Slot adı..." title="İsmi düzenle"/>
+            ${isFav ? '<span class="slot-badge fav-badge">⭐ Favori</span>' : ''}
+          </div>
+          <div class="slot-actions">
+            <button class="icon-btn fav-btn ${isFav ? 'fav-active' : ''}" title="${isFav ? 'Favoriden çıkar' : 'Favoriye al'}">
+              ${isFav ? '★' : '☆'} Favori
+            </button>
+            <button class="icon-btn show-btn ${isShown ? 'show-active' : ''}" title="Ekranda göster">
+              👁 Göster
+            </button>
+            <button class="icon-btn danger del-btn" title="Sil">
+              🗑
+            </button>
+          </div>
+        </div>
+
+        <textarea class="slot-input" placeholder="HTML kodunu buraya yapıştırın...">${escHtml(slot.html || '')}</textarea>
+
+        <div class="files-section">
+          <div class="files-header">
+            <span>📎 Ek Dosyalar (harici .html çağrıları için)</span>
+            <button type="button" class="icon-btn add-file-btn">+ Dosya</button>
+          </div>
+          <div class="files-list"></div>
+          <div class="file-add-form">
+            <input type="text" class="file-name-input" placeholder="ör: detay.html (ana koddaki dosya adıyla birebir aynı olmalı)" />
+            <textarea class="file-content-input" placeholder="Bu dosyanın HTML içeriğini buraya yapıştırın..."></textarea>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="icon-btn file-confirm-btn">Ekle</button>
+              <button type="button" class="icon-btn file-cancel-btn">İptal</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="slot-footer">
+          <span class="slot-meta">
+            ${slot.updatedAt ? formatDate(slot.updatedAt.toDate?.() || new Date(slot.updatedAt)) : '—'}
+          </span>
+          <button class="save-btn save-slot-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Kaydet
+          </button>
+        </div>
+      `;
+
+      // ── Ek Dosyalar (harici .html çağrıları) ──
+      let pendingFiles = { ...(slot.files || {}) };
+      const filesListEl  = card.querySelector(".files-list");
+      const addFileBtn   = card.querySelector(".add-file-btn");
+      const addForm      = card.querySelector(".file-add-form");
+      const fileNameInput    = card.querySelector(".file-name-input");
+      const fileContentInput = card.querySelector(".file-content-input");
+      const slotInput    = card.querySelector(".slot-input");
+
+      // ── Slot HTML textarea'sına Drag-Drop ──
+      slotInput.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        slotInput.style.backgroundColor = "rgba(91, 110, 245, 0.1)";
+        slotInput.style.borderColor = "var(--accent)";
+      });
+
+      slotInput.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        slotInput.style.backgroundColor = "";
+        slotInput.style.borderColor = "";
+      });
+
+      slotInput.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        slotInput.style.backgroundColor = "";
+        slotInput.style.borderColor = "";
+
+        const files = e.dataTransfer.files;
+        for (let file of files) {
+          if (file.name.endsWith(".html")) {
+            try {
+              const content = await file.text();
+              slotInput.value = content;
+              toast(`Dosya yüklendi: ${file.name}`, "success");
+            } catch (err) {
+              toast(`Hata: ${err.message}`, "error");
+            }
+          }
+        }
+      });
+
+      // ── Ek Dosyalar bölümüne Drag-Drop ──
+      filesListEl.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        filesListEl.style.backgroundColor = "rgba(91, 110, 245, 0.1)";
+        filesListEl.style.borderRadius = "8px";
+      });
+
+      filesListEl.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        filesListEl.style.backgroundColor = "";
+      });
+
+      filesListEl.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        filesListEl.style.backgroundColor = "";
+
+        const files = e.dataTransfer.files;
+        for (let file of files) {
+          if (file.name.endsWith(".html")) {
+            try {
+              const content = await file.text();
+              pendingFiles[file.name] = content;
+              renderFilesList();
+              toast(`Dosya eklendi: ${file.name}`, "success");
+            } catch (err) {
+              toast(`Hata: ${err.message}`, "error");
+            }
+          }
+        }
+      });
+
+      function renderFilesList() {
+        const names = Object.keys(pendingFiles);
+        if (names.length === 0) {
+          filesListEl.innerHTML = `<div style="font-size:0.7rem;color:var(--text-muted);">Henüz ek dosya yok</div>`;
+          return;
+        }
+        filesListEl.innerHTML = names.map(n => `
+          <div class="file-chip" data-name="${escHtml(n)}">
+            <span>📄 ${escHtml(n)}</span>
+            <button type="button" class="file-del-btn" data-name="${escHtml(n)}" title="Sil">✕</button>
+          </div>
+        `).join("");
+        filesListEl.querySelectorAll(".file-del-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            delete pendingFiles[btn.dataset.name];
+            renderFilesList();
+          });
+        });
+      }
+      renderFilesList();
+
+      addFileBtn.addEventListener("click", () => {
+        addForm.style.display = addForm.style.display === "flex" ? "none" : "flex";
+      });
+
+      card.querySelector(".file-confirm-btn").addEventListener("click", () => {
+        const name = fileNameInput.value.trim();
+        if (!name) { toast("Dosya adı girin", "error"); return; }
+        pendingFiles[name] = fileContentInput.value;
+        fileNameInput.value = "";
+        fileContentInput.value = "";
+        addForm.style.display = "none";
+        renderFilesList();
+        toast("Dosya eklendi — kaydetmeyi unutmayın", "info");
+      });
+
+      card.querySelector(".file-cancel-btn").addEventListener("click", () => {
+        fileNameInput.value = "";
+        fileContentInput.value = "";
+        addForm.style.display = "none";
+      });
+
+      // İsim değişikliği → kaydet
+      const nameInput = card.querySelector(".slot-name-input");
+      let nameTimer;
+      nameInput.addEventListener("input", () => {
+        clearTimeout(nameTimer);
+        nameTimer = setTimeout(async () => {
+          await setDoc(doc(db, COLL, slot.id), { name: nameInput.value }, { merge: true });
+          if (slots[slot.id]) slots[slot.id].name = nameInput.value;
+          renderDisplayTabs();
+        }, 800);
+      });
+
+      // Kaydet butonu
+      card.querySelector(".save-slot-btn").addEventListener("click", async (e) => {
+        const btn = e.currentTarget;
+        const html = card.querySelector(".slot-input").value;
+        btn.disabled = true;
+        btn.innerHTML = `<div class="loading-dots" style="display:inline-flex"><span></span><span></span><span></span></div>`;
+        try {
+          await setDoc(doc(db, COLL, slot.id), {
+            name: nameInput.value,
+            html,
+            files: pendingFiles,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+          slots[slot.id] = { ...slots[slot.id], name: nameInput.value, html, files: pendingFiles, updatedAt: new Date() };
+          toast("Kaydedildi ✓", "success");
+          if (shownSlotId === slot.id) showSlot(slot.id);
+        } catch (err) {
+          toast("Hata: " + err.message, "error");
+        }
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Kaydet`;
+      });
+
+      // Favori toggle (artık birden fazla favori olabilir)
+      card.querySelector(".fav-btn").addEventListener("click", async () => {
+        if (isFav) {
+          await idbDelete(slot.id);
+          favoriteIds = favoriteIds.filter(fid => fid !== slot.id);
+          toast("Favoriden çıkarıldı", "info");
+        } else {
+          await idbSet({ id: slot.id });
+          favoriteIds = [...favoriteIds, slot.id];
+          toast(favoriteIds.length > 1 ? "Favoriye eklendi — sekmeler aktif ⭐" : "Favoriye alındı ⭐", "success");
+        }
+        applyDisplayState();
+        renderSlotsTab();
+        renderFavoritesTab();
+        refreshFavoritesDisplay();
+      });
+
+      // Göster butonu
+      card.querySelector(".show-btn").addEventListener("click", () => {
+        if (slot.html) {
+          showSlot(slot.id);
+          renderDisplayTabs();
+          overlay.classList.remove("open");
+          toast("Gösteriliyor", "info");
+        } else {
+          toast("Önce HTML ekleyin", "error");
+        }
+      });
+
+      // Sil butonu
+      card.querySelector(".del-btn").addEventListener("click", async () => {
+        if (!confirm(`"${slot.name}" slotunu silmek istediğinize emin misiniz?`)) return;
+        if (favoriteIds.includes(slot.id)) {
+          await idbDelete(slot.id);
+          favoriteIds = favoriteIds.filter(fid => fid !== slot.id);
+        }
+        await deleteDoc(doc(db, COLL, slot.id));
+        delete slots[slot.id];
+        applyDisplayState();
+        renderSlotsTab();
+        toast("Slot silindi", "error");
+      });
+
+      slotsContainer.appendChild(card);
+    });
+  }
+
+  // ── Favoriler Tab Render ──
+  async function renderFavoritesTab() {
+    await loadFavoriteIds();
+    const validFavIds = favoriteIds.filter(id => slots[id]);
+
+    if (validFavIds.length === 0) {
+      favsContainer.innerHTML = `<div class="fav-empty">⭐ Henüz favori seçilmedi<br><small style="color:var(--text-muted);font-size:0.75rem;margin-top:8px;display:block;">Slotlar sekmesinden bir veya daha fazla slotu favoriye alın</small></div>`;
+      return;
+    }
+
+    favsContainer.innerHTML = validFavIds.map(id => {
+      const slot = slots[id];
+      return `
+        <div class="slot-card is-favorite" data-id="${id}">
+          <div class="slot-header">
+            <div class="slot-name">
+              ⭐ ${escHtml(slot.name || 'Favori Slot')}
+              <span class="slot-badge fav-badge">${id === shownSlotId ? 'Gösteriliyor' : 'Favori'}</span>
+            </div>
+          </div>
+          <div style="font-size:0.75rem;color:var(--text-muted);background:var(--bg);border-radius:8px;padding:10px;font-family:monospace;max-height:160px;overflow:auto;white-space:pre-wrap;word-break:break-all;">${escHtml((slot.html || '').substring(0, 400))}${slot.html && slot.html.length > 400 ? '\n... (daha fazla)' : ''}</div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <button class="save-btn fav-show-btn" style="flex:1;justify-content:center;">👁 Ekranda Göster</button>
+            <button class="icon-btn danger fav-remove-btn">☆ Favoriden Çıkar</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    favsContainer.querySelectorAll(".fav-show-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.closest(".slot-card").dataset.id;
+        showSlot(id);
+        renderDisplayTabs();
+        overlay.classList.remove("open");
+        toast("Gösteriliyor", "info");
+      });
+    });
+
+    favsContainer.querySelectorAll(".fav-remove-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.closest(".slot-card").dataset.id;
+        await idbDelete(id);
+        favoriteIds = favoriteIds.filter(fid => fid !== id);
+        applyDisplayState();
+        renderFavoritesTab();
+        renderSlotsTab();
+        refreshFavoritesDisplay();
+        toast("Favoriden çıkarıldı", "info");
+      });
+    });
+  }
+
+  // ── Yardımcılar ──
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function formatDate(d) {
+    if (!d || isNaN(d)) return "";
+    return d.toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+  }
+</script>
+</body>
+</html>
