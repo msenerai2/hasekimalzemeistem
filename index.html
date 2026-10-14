@@ -982,11 +982,48 @@
   }
 
 
+
+  /* Mobil kart görünümü */
+  .share-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}
+  .share-btn{background:#16a34a!important;color:#fff!important;border-color:#16a34a!important}
+  .settings-btn{background:#334155!important;color:#fff!important;border-color:#334155!important}
+  .wa-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px}
+  .wa-modal{background:#fff;border-radius:16px;padding:20px;width:min(520px,100%);max-height:85vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .wa-modal h2{font-size:19px;margin-bottom:8px}.wa-modal p{color:#475569;font-size:13px;margin-bottom:12px}
+  .wa-field{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}.wa-field input{flex:1;min-width:120px;padding:10px;border:1px solid #cbd5e1;border-radius:8px}
+  .wa-contact{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin:7px 0}
+  .wa-contact small{display:block;color:#64748b}.wa-contact button{padding:7px 10px}
+  @media(max-width:760px){
+    body{padding:10px;font-size:13px} h1{font-size:22px;margin-bottom:14px;flex-wrap:wrap}
+    .tabs{margin-bottom:14px;padding:4px;gap:4px;border-radius:10px}.tab{padding:10px 12px;font-size:12px}
+    .controls{display:flex;flex-wrap:wrap;gap:7px;padding:10px;margin-bottom:10px}
+    .controls input[type=text]{width:100%;min-width:0;flex:1 1 100%}
+    .controls button{padding:8px 10px;font-size:12px;flex:1 1 auto;justify-content:center}
+    .ctrl-sep{display:none}
+    .tbl-wrap{overflow:visible;background:transparent;border:0;box-shadow:none}
+    .tbl-wrap table,.tbl-wrap tbody{display:block;width:100%;}
+    .tbl-wrap thead{display:none}
+    .tbl-wrap tbody tr:not(.kategori-header):not(.kategori-header-empty){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;background:#fff;border:1px solid #dbe3ed;border-radius:14px;padding:12px;margin:0 0 12px;box-shadow:0 3px 12px rgba(15,23,42,.07)}
+    .tbl-wrap tbody tr td{display:flex;flex-direction:column;justify-content:center;min-width:0;padding:6px 7px;border:1px solid #eef2f7;border-radius:8px;background:#f8fafc;text-align:left!important;overflow-wrap:anywhere;font-size:12px;}
+    .tbl-wrap tbody tr td:before{content:attr(data-label);font-size:10px;line-height:1.25;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:4px;letter-spacing:.02em}
+    .tbl-wrap tbody tr td.ad-cell{grid-column:1/-1;font-size:14px;background:#eff6ff;color:#0f172a}
+    .tbl-wrap tbody tr td[data-label="Jenerik"]{grid-column:1/-1}
+    .tbl-wrap tbody tr td[data-label="İstem"]{grid-column:1/-1;flex-direction:row;justify-content:flex-start;align-items:center;gap:6px}
+    .tbl-wrap tbody tr td[data-label="İstem"]:before{content:'İSTEM';margin:0 8px 0 0}
+    .tbl-wrap tbody tr td[data-label="Girişimsel"],.tbl-wrap tbody tr td[data-label="Yarabakım"],.tbl-wrap tbody tr td[data-label="Yarabakım"],.tbl-wrap tbody tr td[data-label="Poliklinik"]{grid-column:span 1;background:#f0fdf4;border-color:#bbf7d0}
+    .tbl-wrap tbody tr td[data-label="Girişimsel"] input,.tbl-wrap tbody tr td[data-label="Yara Bakım"] input,.tbl-wrap tbody tr td[data-label="Yarabakım"] input,.tbl-wrap tbody tr td[data-label="Poliklinik"] input{width:100%;min-width:0;font-size:14px;padding:7px 4px}
+    .tbl-wrap tbody tr td input[type=text]{width:100%;min-width:0;font-size:12px;padding:7px 5px}
+    .tbl-wrap tbody tr td[data-label="Kategori"],.tbl-wrap tbody tr td[data-label="Alt Kategori"]{grid-column:span 1}
+    .tbl-wrap tbody tr.kategori-header,.tbl-wrap tbody tr.kategori-header-empty{display:none}
+    .count{margin:10px 2px}
+  }
+  @media(max-width:380px){.tbl-wrap tbody tr:not(.kategori-header):not(.kategori-header-empty){gap:5px;padding:8px}.tbl-wrap tbody tr td{padding:5px;font-size:11px}.share-tools{width:100%}}
+
 </style>
 </head>
 <body>
 
-<h1>Stok Takip <span class="fb-status"><span class="dot" id="fbdot"></span><span id="fbstatustxt">Bağlanıyor...</span></span></h1>
+<h1>Stok Takip <button class="settings-btn" onclick="openWhatsAppSettings()" style="margin-left:auto">⚙️ WhatsApp Kişileri</button> <span class="fb-status"><span class="dot" id="fbdot"></span><span id="fbstatustxt">Bağlanıyor...</span></span></h1>
 
 <div class="tabs">
   <button class="tab active" onclick="showTab('veri-paste')">Veri Yapıştır</button>
@@ -1085,7 +1122,7 @@
 
     <button class="toggle-btn" id="btnToggleCatIlac" onclick="toggleCategoriesIlac()">📋 Kategorileri Gizle</button>
     <button id="btnGirisler" onclick="toggleGirisler()" title="Toplam > 0 olan satırları göster">Girişleri Göster</button>
-    <button class="btn-png" id="btnPng" onclick="downloadPng()" title="No, İlaç Adı ve Toplam sütununu PNG olarak indir">PNG İndir</button>
+    <button class="btn-png" id="btnPng" onclick="downloadPng()" title="No, İlaç Adı ve Toplam sütununu PNG olarak indir">PNG İndir</button><button class="share-btn" onclick="chooseWhatsAppContact('ilac')">WhatsApp’ta Paylaş</button>
 
     <div class="ctrl-sep"></div>
     <button class="danger" id="btnGirisSil" onclick="clearGirisler()" title="Girişimsel, Yara Bakım ve Poliklinik değerlerini sıfırla">Girişleri Sil</button>
@@ -1137,7 +1174,7 @@
 
     <button class="toggle-btn" id="btnToggleCat" onclick="toggleCategories()">📋 Kategorileri Gizle</button>
     <button id="btnMalzGirisler" onclick="toggleMalzGirisler()" title="Toplam > 0 olan satırları göster">Girişleri Göster</button>
-    <button class="btn-png" id="btnMalzPng" onclick="downloadMalzPng()" title="Malzeme listesini PNG olarak indir">PNG İndir</button>
+    <button class="btn-png" id="btnMalzPng" onclick="downloadMalzPng()" title="Malzeme listesini PNG olarak indir">PNG İndir</button><button class="share-btn" onclick="chooseWhatsAppContact('malz')">WhatsApp’ta Paylaş</button>
 
     <div class="ctrl-sep"></div>
     <button class="danger" id="btnMalzGirisSil" onclick="clearMalzGirisler()" title="Girişimsel, Yarabakım ve Poliklinik değerlerini sıfırla">Girişleri Sil</button>
@@ -1344,7 +1381,7 @@ window.toggleGirisler = function(){
 };
 
 // ── PNG İndir ────────────────────────────────────────────────
-window.downloadPng = function(){
+window.downloadPng = function(sharePhone){
   // Mevcut görüntülenen (filtrelenmiş) veriyi al
   var q=(document.getElementById('search').value||'').toLowerCase();
   var rows = allData.filter(function(r){
@@ -1369,21 +1406,8 @@ window.downloadPng = function(){
 
   if(rows.length===0){ alert('Gösterilecek satır yok.'); return; }
 
-  // Kategoriye göre grupla
-  var groups = {};
-  rows.forEach(function(r){
-    var cat = (r.kategori || 'Kategorisiz').trim();
-    if(!groups[cat]) groups[cat] = [];
-    groups[cat].push(r);
-  });
-  
-  var categories = Object.keys(groups).sort();
-  var displayRows = [];
-  categories.forEach(function(cat){
-    groups[cat].forEach(function(r){
-      displayRows.push(r);
-    });
-  });
+  // Kategoriler PNG çıktısında gösterilmez; tüm malzemeler tek listede.
+  var displayRows = rows;
 
   var btn = document.getElementById('btnPng');
   btn.textContent = 'Hazırlanıyor...';
@@ -1393,7 +1417,6 @@ window.downloadPng = function(){
   var pad = 24;
   var rowH = 36;
   var headerH = 44;
-  var katH = 28;
   var colNo = 60, colAd = 360, colTop = 70, colBirim = 120;
   var W = pad*2 + colNo + colAd + colTop + colBirim;
 
@@ -1406,7 +1429,7 @@ window.downloadPng = function(){
   var titleLine2 = dd + '.' + mm + '.' + yyyy + ' TARİHLİ';
   var titleLine3 = 'İLAÇ İSTEMLERİ LİSTESİ';
   var titleBlockH = 92;
-  var H = titleBlockH + headerH + displayRows.length * rowH + (categories.length * katH) + pad;
+  var H = titleBlockH + headerH + displayRows.length * rowH + pad;
   
   // Dinamik satır yüksekliğini hesapla (metin kaydırması için)
   var tempCanvas = document.createElement('canvas');
@@ -1431,20 +1454,24 @@ window.downloadPng = function(){
     var dynamicRowH = Math.max(rowH, lines.length * 16 + 20);
     totalDynamicHeight += dynamicRowH;
   });
-  // Kategori başlıkları için ekle
-  var uniqueCategories = {};
-  displayRows.forEach(function(r){
-    var cat = (r.kategori || 'Kategorisiz').trim();
-    uniqueCategories[cat] = true;
-  });
-  totalDynamicHeight += Object.keys(uniqueCategories).length * katH;
   
   H = titleBlockH + headerH + totalDynamicHeight + pad;
 
   var canvas = document.createElement('canvas');
-  var dpr = window.devicePixelRatio || 2;
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
+  // Hedef 16x ölçek (önceki 4x sürümün 4 katı). Çok büyük listelerde
+  // tarayıcı canvas sınırlarına/memory limitlerine çarpmamak için güvenli ölçek seç.
+  var targetDpr = 16;
+  var maxCanvasSide = 16384;
+  var maxCanvasPixels = 48000000; // yaklaşık 48 MP; bellek kullanımını sınırlar
+  var dpr = Math.min(
+    targetDpr,
+    maxCanvasSide / W,
+    maxCanvasSide / H,
+    Math.sqrt(maxCanvasPixels / (W * H))
+  );
+  dpr = Math.max(1, dpr);
+  canvas.width  = Math.max(1, Math.floor(W * dpr));
+  canvas.height = Math.max(1, Math.floor(H * dpr));
   canvas.style.width  = W + 'px';
   canvas.style.height = H + 'px';
   var ctx = canvas.getContext('2d');
@@ -1480,8 +1507,8 @@ window.downloadPng = function(){
   ctx.beginPath(); ctx.moveTo(0, colTop0+headerH); ctx.lineTo(W, colTop0+headerH); ctx.stroke();
 
   // Kolon başlık metinleri
-  ctx.fillStyle = '#888';
-  ctx.font = '500 11px system-ui, -apple-system, sans-serif';
+  ctx.fillStyle = '#333333';
+  ctx.font = '700 13px system-ui, -apple-system, sans-serif';
   ctx.fillText('No',       pad, colTop0 + headerH/2 + 4);
   ctx.fillText('İlaç Adı',  pad + colNo, colTop0 + headerH/2 + 4);
   ctx.fillText('Toplam',    pad + colNo + colAd, colTop0 + headerH/2 + 4);
@@ -1498,21 +1525,7 @@ window.downloadPng = function(){
 
   // Satırlar
   var currentY = titleBlockH + headerH;
-  var lastKat = '';
-  
   displayRows.forEach(function(r, i){
-    var katName = (r.kategori || 'Kategorisiz').trim();
-    
-    // Kategori değişirse başlık satırı ekle
-    if(katName !== lastKat){
-      ctx.fillStyle='#e8e8e0'; ctx.fillRect(0,currentY,W,katH);
-      ctx.fillStyle='#333'; ctx.font='600 12px system-ui, -apple-system, sans-serif';
-      ctx.fillText(katName, pad, currentY+katH/2+3);
-      ctx.strokeStyle='#ddd'; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(0,currentY+katH); ctx.lineTo(W,currentY+katH); ctx.stroke();
-      currentY += katH;
-      lastKat = katName;
-    }
     
     // Dinamik satır yüksekliğini hesapla (metin kaydırması için)
     ctx.font = '500 13px system-ui, -apple-system, sans-serif';
@@ -1545,8 +1558,8 @@ window.downloadPng = function(){
     var cy = y + dynamicRowH/2 + 5;
 
     // No
-    ctx.fillStyle = '#aaa';
-    ctx.font = '12px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = '#ff0000';
+    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
     ctx.fillText(String(r.no), pad, cy);
 
     // İlaç adı (tam yazı, satır kaydırma ile)
@@ -1581,14 +1594,14 @@ window.downloadPng = function(){
     var pol=Number(r.poliklinik)||0;
     var top=gir+yar+pol;
     ctx.fillStyle = top > 0 ? '#1a1a18' : '#ccc';
-    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
+    ctx.font = '700 15px system-ui, -apple-system, sans-serif';
     var topTxt = top > 0 ? String(top) : '–';
     var tw = ctx.measureText(topTxt).width;
     ctx.fillText(topTxt, pad + colNo + colAd + colTop - tw - 8, cy);
 
     // Birim
-    ctx.fillStyle = '#555';
-    ctx.font = '12px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = '#222222';
+    ctx.font = '700 14px system-ui, -apple-system, sans-serif';
     ctx.fillText(r.birim||'', pad + colNo + colAd + colTop, cy);
     
     currentY += dynamicRowH;
@@ -1598,14 +1611,8 @@ window.downloadPng = function(){
   ctx.strokeStyle = '#e0e0de'; ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, W-1, H-1);
 
-  // İndir
-  var link = document.createElement('a');
-  link.download = 'ilac_liste_' + new Date().toISOString().slice(0,10) + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-
-  btn.textContent = 'PNG İndir';
-  btn.classList.remove('loading-png');
+  var filename = 'ilac_liste_' + new Date().toISOString().slice(0,10) + '.png';
+  deliverPng(canvas, filename, sharePhone || null).finally(function(){btn.textContent='PNG İndir';btn.classList.remove('loading-png');});
 };
 
 // ── Parser ────────────────────────────────────────────────────
@@ -2560,7 +2567,7 @@ window.clearMalzGirisler = async function(){
 };
 
 // ── Malzeme PNG İndir ─────────────────────────────────────────
-window.downloadMalzPng = function(){
+window.downloadMalzPng = function(sharePhone){
   // Mevcut görüntülenen (filtrelenmiş) malzeme verilerini al
   var q = (document.getElementById('malzSearch').value || '').toLowerCase();
   var rows = allMalzData.filter(function(r){
@@ -2592,21 +2599,8 @@ window.downloadMalzPng = function(){
 
   if(rows.length === 0){ alert('Gösterilecek satır yok.'); return; }
 
-  // Kategoriye göre grupla
-  var groups = {};
-  rows.forEach(function(r){
-    var cat = (r.kategori || 'Kategorisiz').trim();
-    if(!groups[cat]) groups[cat] = [];
-    groups[cat].push(r);
-  });
-  
-  var categories = Object.keys(groups).sort();
-  var displayRows = [];
-  categories.forEach(function(cat){
-    groups[cat].forEach(function(r){
-      displayRows.push(r);
-    });
-  });
+  // Kategoriler PNG çıktısında gösterilmez; tüm malzemeler tek listede.
+  var displayRows = rows;
 
   var btn = document.getElementById('btnMalzPng');
   btn.textContent = 'Hazırlanıyor...';
@@ -2616,7 +2610,6 @@ window.downloadMalzPng = function(){
   var pad = 24;
   var rowH = 36;
   var headerH = 44;
-  var katH = 28;
   var colNo = 60, colAd = 360, colStok = 70, colBirim = 120;
   var W = pad*2 + colNo + colAd + colStok + colBirim;
 
@@ -2628,7 +2621,7 @@ window.downloadMalzPng = function(){
   var yyyy = now.getFullYear();
   var titleLine2 = dd + '.' + mm + '.' + yyyy + ' TARİHLİ';
   var titleBlockH = 80;
-  var H = titleBlockH + headerH + displayRows.length * rowH + (categories.length * katH) + pad;
+  var H = titleBlockH + headerH + displayRows.length * rowH + pad;
   
   // Dinamik satır yüksekliğini hesapla (metin kaydırması için)
   var tempCanvas = document.createElement('canvas');
@@ -2653,20 +2646,24 @@ window.downloadMalzPng = function(){
     var dynamicRowH = Math.max(rowH, lines.length * 16 + 20);
     totalDynamicHeight += dynamicRowH;
   });
-  // Kategori başlıkları için ekle
-  var uniqueCategories = {};
-  displayRows.forEach(function(r){
-    var cat = (r.kategori || 'Kategorisiz').trim();
-    uniqueCategories[cat] = true;
-  });
-  totalDynamicHeight += Object.keys(uniqueCategories).length * katH;
   
   H = titleBlockH + headerH + totalDynamicHeight + pad;
 
   var canvas = document.createElement('canvas');
-  var dpr = window.devicePixelRatio || 2;
-  canvas.width  = W * dpr;
-  canvas.height = H * dpr;
+  // Hedef 16x ölçek (önceki 4x sürümün 4 katı). Çok büyük listelerde
+  // tarayıcı canvas sınırlarına/memory limitlerine çarpmamak için güvenli ölçek seç.
+  var targetDpr = 16;
+  var maxCanvasSide = 16384;
+  var maxCanvasPixels = 48000000; // yaklaşık 48 MP; bellek kullanımını sınırlar
+  var dpr = Math.min(
+    targetDpr,
+    maxCanvasSide / W,
+    maxCanvasSide / H,
+    Math.sqrt(maxCanvasPixels / (W * H))
+  );
+  dpr = Math.max(1, dpr);
+  canvas.width  = Math.max(1, Math.floor(W * dpr));
+  canvas.height = Math.max(1, Math.floor(H * dpr));
   canvas.style.width  = W + 'px';
   canvas.style.height = H + 'px';
   var ctx = canvas.getContext('2d');
@@ -2699,8 +2696,8 @@ window.downloadMalzPng = function(){
   ctx.beginPath(); ctx.moveTo(0, colTop0+headerH); ctx.lineTo(W, colTop0+headerH); ctx.stroke();
 
   // Kolon başlık metinleri
-  ctx.fillStyle = '#888';
-  ctx.font = '500 11px system-ui, -apple-system, sans-serif';
+  ctx.fillStyle = '#333333';
+  ctx.font = '700 13px system-ui, -apple-system, sans-serif';
   ctx.fillText('No',       pad, colTop0 + headerH/2 + 4);
   ctx.fillText('Malzeme Adı',  pad + colNo, colTop0 + headerH/2 + 4);
   ctx.fillText('Toplam',    pad + colNo + colAd, colTop0 + headerH/2 + 4);
@@ -2717,21 +2714,7 @@ window.downloadMalzPng = function(){
 
   // Satırlar
   var currentY = titleBlockH + headerH;
-  var lastKat = '';
-  
   displayRows.forEach(function(r, i){
-    var katName = (r.kategori || 'Kategorisiz').trim();
-    
-    // Kategori değişirse başlık satırı ekle
-    if(katName !== lastKat){
-      ctx.fillStyle='#e8e8e0'; ctx.fillRect(0,currentY,W,katH);
-      ctx.fillStyle='#333'; ctx.font='600 12px system-ui, -apple-system, sans-serif';
-      ctx.fillText(katName, pad, currentY+katH/2+3);
-      ctx.strokeStyle='#ddd'; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(0,currentY+katH); ctx.lineTo(W,currentY+katH); ctx.stroke();
-      currentY += katH;
-      lastKat = katName;
-    }
     
     // Dinamik satır yüksekliğini hesapla (metin kaydırması için)
     ctx.font = '500 13px system-ui, -apple-system, sans-serif';
@@ -2764,8 +2747,8 @@ window.downloadMalzPng = function(){
     var cy = y + dynamicRowH/2 + 5;
 
     // No
-    ctx.fillStyle = '#aaa';
-    ctx.font = '12px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = '#ff0000';
+    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
     ctx.fillText(String(r.no), pad, cy);
 
     // Malzeme adı (tam yazı, satır kaydırma ile)
@@ -2800,14 +2783,14 @@ window.downloadMalzPng = function(){
     var poli = Number(r.poliklinik) || 0;
     var top = gir + yara + poli;
     ctx.fillStyle = top > 0 ? '#1a1a18' : '#ccc';
-    ctx.font = '700 13px system-ui, -apple-system, sans-serif';
+    ctx.font = '700 15px system-ui, -apple-system, sans-serif';
     var topTxt = top > 0 ? String(top) : '–';
     var tw = ctx.measureText(topTxt).width;
     ctx.fillText(topTxt, pad + colNo + colAd + colStok - tw - 8, cy);
 
     // Birim
-    ctx.fillStyle = '#555';
-    ctx.font = '12px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = '#222222';
+    ctx.font = '700 14px system-ui, -apple-system, sans-serif';
     ctx.fillText(r.birim||'', pad + colNo + colAd + colStok, cy);
     
     currentY += dynamicRowH;
@@ -2817,14 +2800,8 @@ window.downloadMalzPng = function(){
   ctx.strokeStyle = '#e0e0de'; ctx.lineWidth = 1;
   ctx.strokeRect(0.5, 0.5, W-1, H-1);
 
-  // İndir
-  var link = document.createElement('a');
-  link.download = 'malzeme_liste_' + new Date().toISOString().slice(0,10) + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-
-  btn.textContent = 'PNG İndir';
-  btn.classList.remove('loading-png');
+  var filename = 'malzeme_liste_' + new Date().toISOString().slice(0,10) + '.png';
+  deliverPng(canvas, filename, sharePhone || null).finally(function(){btn.textContent='PNG İndir';btn.classList.remove('loading-png');});
 };
 
 // ── Her İki Alan Temizleme ────────────────────────────────────────────
@@ -3179,6 +3156,51 @@ window.saveNewMalz = async function(){
 })();
 
 
+
+// WhatsApp paylaşımı: kayıtlı kişiler bu tarayıcıda saklanır.
+var waContacts = [];
+try { waContacts = JSON.parse(localStorage.getItem('stokTakipWhatsAppContacts') || '[]'); } catch(e) { waContacts = []; }
+var waShareType = 'ilac';
+window.openWhatsAppSettings = function(){ renderWhatsAppContacts('settings'); document.getElementById('waSettingsBackdrop').style.display='flex'; };
+window.chooseWhatsAppContact = function(type){
+  waShareType=type;
+  if(!waContacts.length){ alert('Önce WhatsApp Kişileri ayarlarından en az bir kişi ekleyin.'); openWhatsAppSettings(); return; }
+  renderWhatsAppContacts('share'); document.getElementById('waSettingsBackdrop').style.display='flex';
+};
+window.closeWhatsAppModal = function(){ document.getElementById('waSettingsBackdrop').style.display='none'; };
+function renderWhatsAppContacts(mode){
+  var editor=document.getElementById('waContactEditor');
+  editor.style.display=mode==='settings'?'block':'none';
+  document.getElementById('waModalTitle').textContent=mode==='settings'?'WhatsApp Kişileri':'PNG gönderilecek kişiyi seçin';
+  document.getElementById('waModalHint').textContent=mode==='settings'?'Kişileri ülke koduyla birlikte ekleyin. Örnek: 905xxxxxxxxx':'Kişiyi seçtiğinizde PNG hazırlanır. Cihaz destekliyorsa paylaşım menüsünden WhatsApp’ı seçin.';
+  var list=document.getElementById('waContactList');
+  if(!waContacts.length){list.innerHTML='<p>Henüz kişi eklenmedi.</p>';return;}
+  list.innerHTML=waContacts.map(function(c,i){return '<div class="wa-contact"><div><strong>'+escapeHtmlWa(c.name)+'</strong><small>'+escapeHtmlWa(c.phone)+'</small></div><div>'+(mode==='share'?'<button class="share-btn" onclick="shareToWhatsAppContact('+i+')">Seç ve paylaş</button>':'<button class="danger" onclick="removeWhatsAppContact('+i+')">Sil</button>')+'</div></div>';}).join('');
+}
+function escapeHtmlWa(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+window.addWhatsAppContact=function(){
+  var name=document.getElementById('waContactName').value.trim();
+  var phone=document.getElementById('waContactPhone').value.replace(/[^0-9]/g,'');
+  if(!name||phone.length<10){alert('Kişi adı ve ülke koduyla geçerli telefon numarası girin.');return;}
+  waContacts.push({name:name,phone:phone}); localStorage.setItem('stokTakipWhatsAppContacts',JSON.stringify(waContacts));
+  document.getElementById('waContactName').value='';document.getElementById('waContactPhone').value='';renderWhatsAppContacts('settings');
+};
+window.removeWhatsAppContact=function(i){waContacts.splice(i,1);localStorage.setItem('stokTakipWhatsAppContacts',JSON.stringify(waContacts));renderWhatsAppContacts('settings');};
+window.shareToWhatsAppContact=function(i){
+  var c=waContacts[i]; if(!c)return; closeWhatsAppModal();
+  if(waShareType==='malz') downloadMalzPng(c.phone); else downloadPng(c.phone);
+};
+async function deliverPng(canvas, filename, phone){
+  var blob=await new Promise(function(resolve){canvas.toBlob(resolve,'image/png');});
+  if(!blob){alert('PNG oluşturulamadı.');return;}
+  var file=new File([blob],filename,{type:'image/png'});
+  if(phone && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:filename,text:'Stok Takip PNG'});return;}catch(e){if(e && e.name==='AbortError')return;}
+  }
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(function(){URL.revokeObjectURL(url);},30000);
+  if(phone){setTimeout(function(){window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Stok Takip PNG dosyasını indirdim. Lütfen ekli dosyayı seçerek gönderin.'),'_blank');},350);alert('Bu tarayıcı WhatsApp’a dosyayı otomatik eklemeyi desteklemiyor. PNG indirildi ve seçilen kişinin WhatsApp sohbeti açılacak; dosyayı sohbete ekleyin.');}
+}
+
 </script>
 
 <!-- Modal for adding new malzeme -->
@@ -3243,6 +3265,14 @@ window.saveNewMalz = async function(){
       <button onclick="closeAddMalzModal()">İptal</button>
       <button class="primary" onclick="saveNewMalz()">Kaydet</button>
     </div>
+  </div>
+</div>
+
+
+<div class="wa-modal-backdrop" id="waSettingsBackdrop" onclick="if(event.target===this)closeWhatsAppModal()">
+  <div class="wa-modal"><h2 id="waModalTitle">WhatsApp Kişileri</h2><p id="waModalHint">Kişileri ülke koduyla birlikte ekleyin. Örnek: 905xxxxxxxxx</p>
+    <div id="waContactEditor" style="display:none"><div class="wa-field"><input id="waContactName" placeholder="Kişi adı"><input id="waContactPhone" inputmode="tel" placeholder="Telefon (905...)" /></div><button class="primary" onclick="addWhatsAppContact()">➕ Kişiyi Ekle</button><hr style="margin:14px 0;border:0;border-top:1px solid #e2e8f0"></div>
+    <div id="waContactList"></div><div style="display:flex;justify-content:flex-end;margin-top:14px"><button onclick="closeWhatsAppModal()">Kapat</button></div>
   </div>
 </div>
 
