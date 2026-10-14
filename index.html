@@ -3161,6 +3161,7 @@ window.saveNewMalz = async function(){
 var waContacts = [];
 try { waContacts = JSON.parse(localStorage.getItem('stokTakipWhatsAppContacts') || '[]'); } catch(e) { waContacts = []; }
 var waShareType = 'ilac';
+var waPendingChatWindow = null;
 window.openWhatsAppSettings = function(){ renderWhatsAppContacts('settings'); document.getElementById('waSettingsBackdrop').style.display='flex'; };
 window.chooseWhatsAppContact = function(type){
   waShareType=type;
@@ -3172,7 +3173,7 @@ function renderWhatsAppContacts(mode){
   var editor=document.getElementById('waContactEditor');
   editor.style.display=mode==='settings'?'block':'none';
   document.getElementById('waModalTitle').textContent=mode==='settings'?'WhatsApp Kişileri':'PNG gönderilecek kişiyi seçin';
-  document.getElementById('waModalHint').textContent=mode==='settings'?'Kişileri ülke koduyla birlikte ekleyin. Örnek: 905xxxxxxxxx':'Kişiyi seçtiğinizde PNG hazırlanır. Cihaz destekliyorsa paylaşım menüsünden WhatsApp’ı seçin.';
+  document.getElementById('waModalHint').textContent=mode==='settings'?'Kişileri ülke koduyla birlikte ekleyin. Örnek: 905xxxxxxxxx':'Seçtiğiniz kişinin WhatsApp sohbeti doğrudan açılır. PNG ayrıca indirilir; WhatsApp dosyayı otomatik eklemeye izin vermediği için sohbette ataç simgesinden ekleyin.';
   var list=document.getElementById('waContactList');
   if(!waContacts.length){list.innerHTML='<p>Henüz kişi eklenmedi.</p>';return;}
   list.innerHTML=waContacts.map(function(c,i){return '<div class="wa-contact"><div><strong>'+escapeHtmlWa(c.name)+'</strong><small>'+escapeHtmlWa(c.phone)+'</small></div><div>'+(mode==='share'?'<button class="share-btn" onclick="shareToWhatsAppContact('+i+')">Seç ve paylaş</button>':'<button class="danger" onclick="removeWhatsAppContact('+i+')">Sil</button>')+'</div></div>';}).join('');
@@ -3187,18 +3188,30 @@ window.addWhatsAppContact=function(){
 };
 window.removeWhatsAppContact=function(i){waContacts.splice(i,1);localStorage.setItem('stokTakipWhatsAppContacts',JSON.stringify(waContacts));renderWhatsAppContacts('settings');};
 window.shareToWhatsAppContact=function(i){
-  var c=waContacts[i]; if(!c)return; closeWhatsAppModal();
+  var c=waContacts[i]; if(!c)return;
+  closeWhatsAppModal();
+  // Sekmeyi tıklama anında açarak tarayıcının açılır pencere engelini önle.
+  waPendingChatWindow=window.open('about:blank','_blank');
   if(waShareType==='malz') downloadMalzPng(c.phone); else downloadPng(c.phone);
 };
 async function deliverPng(canvas, filename, phone){
   var blob=await new Promise(function(resolve){canvas.toBlob(resolve,'image/png');});
-  if(!blob){alert('PNG oluşturulamadı.');return;}
-  var file=new File([blob],filename,{type:'image/png'});
-  if(phone && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file],title:filename,text:'Stok Takip PNG'});return;}catch(e){if(e && e.name==='AbortError')return;}
+  if(!blob){
+    if(waPendingChatWindow && !waPendingChatWindow.closed) waPendingChatWindow.close();
+    waPendingChatWindow=null;
+    alert('PNG oluşturulamadı.');return;
   }
-  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(function(){URL.revokeObjectURL(url);},30000);
-  if(phone){setTimeout(function(){window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Stok Takip PNG dosyasını indirdim. Lütfen ekli dosyayı seçerek gönderin.'),'_blank');},350);alert('Bu tarayıcı WhatsApp’a dosyayı otomatik eklemeyi desteklemiyor. PNG indirildi ve seçilen kişinin WhatsApp sohbeti açılacak; dosyayı sohbete ekleyin.');}
+  // PNG'yi indir; web tarayıcıları güvenlik nedeniyle dosyayı WhatsApp sohbetine
+  // arka planda otomatik ekleyip gönderemez. Kişinin sohbetini doğrudan aç.
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(url);},30000);
+  if(phone){
+    var chatUrl='https://wa.me/'+String(phone).replace(/[^0-9]/g,'')+'?text='+encodeURIComponent('Merhaba, Stok Takip PNG dosyasını gönderiyorum.');
+    if(waPendingChatWindow && !waPendingChatWindow.closed){waPendingChatWindow.location.href=chatUrl;}
+    else {window.open(chatUrl,'_blank');}
+    alert('Seçtiğiniz kişinin WhatsApp sohbeti açıldı ve PNG indirildi. Dosyayı sohbet ekranında ataç (+) > Belge/Galeri bölümünden seçip gönderin.');
+  }
+  waPendingChatWindow=null;
 }
 
 </script>
